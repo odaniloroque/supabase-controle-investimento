@@ -1,71 +1,60 @@
-import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../config/supabase';
+import { Request, Response } from 'express';
+import { AuthService } from '../services/authService';
 import { AppError } from '../middlewares/errorHandler';
 
+const authService = new AuthService();
+
 export class AuthController {
-  async login(req: Request, res: Response, next: NextFunction) {
+  async register(req: Request, res: Response) {
     try {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        throw new AppError(400, 'Email e senha são obrigatórios');
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw new AppError(401, 'Credenciais inválidas');
-      }
-
-      res.json({
-        user: data.user,
-        session: data.session,
-      });
+      const result = await authService.register(req.body);
+      return res.status(201).json(result);
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  async register(req: Request, res: Response, next: NextFunction) {
+  async login(req: Request, res: Response) {
     try {
-      const { email, password } = req.body;
-
-      if (!email || !password) {
-        throw new AppError(400, 'Email e senha são obrigatórios');
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw new AppError(400, error.message);
-      }
-
-      res.status(201).json({
-        user: data.user,
-        session: data.session,
-      });
+      const result = await authService.login(req.body);
+      return res.json(result);
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 
-  async logout(req: Request, res: Response, next: NextFunction) {
+  async loginWithGoogle(req: Request, res: Response) {
     try {
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw new AppError(400, error.message);
+      const { token } = req.body;
+      if (!token) {
+        throw new AppError(400, 'Token do Google não fornecido');
       }
 
-      res.status(204).send();
+      const result = await authService.loginWithGoogle(token);
+      return res.json(result);
     } catch (error) {
-      next(error);
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      return res.status(500).json({ error: 'Erro interno do servidor' });
+    }
+  }
+
+  async verifyEmail(req: Request, res: Response) {
+    try {
+      const result = await authService.verifyEmail(req.body);
+      return res.json(result);
+    } catch (error) {
+      if (error instanceof AppError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      return res.status(500).json({ error: 'Erro interno do servidor' });
     }
   }
 } 

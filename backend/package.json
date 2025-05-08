@@ -15,6 +15,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@investimentos/core": "workspace:*",
     "@prisma/client": "^5.10.2",
     "@supabase/supabase-js": "^2.39.3",
     "cors": "^2.8.5",
